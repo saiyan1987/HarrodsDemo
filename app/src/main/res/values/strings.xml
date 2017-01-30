@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">HarrodsDemo</string>
+    <string name="harrods">Harrods</string>
+    <string name="title_item_list">Items</string>
+    <string name="title_item_detail">Item Detail</string>
+    <string name="title_harrodmenuitem_list">HarrodMenuItems</string>
+    <string name="title_harrodmenuitem_detail">HarrodMenuItem Detail</string>
+    <string name="drawer_open">Drawer Open</string>
+    <string name="drawer_closed">Drawer Closed</string>
+</resources>
