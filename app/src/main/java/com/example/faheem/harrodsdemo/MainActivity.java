@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle actionBarDrawerToggle;
     private ListView mainContentListView;
+    private  Intent intent_service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         //getSupportActionBar().setHomeButtonEnabled(true);
 
-        Intent intent_service = new Intent(this,MQService.class);
+        intent_service = new Intent(this,MQService.class);
         startService(intent_service);
 
     }
@@ -125,5 +126,14 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
+    }
+
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopService(intent_service);
+
     }
 }

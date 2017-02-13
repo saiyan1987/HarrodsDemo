@@ -50,6 +50,7 @@ public class MQService extends Service {
         return null;
     }
 
+
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
 
@@ -71,7 +72,7 @@ public class MQService extends Service {
                 webSocketFactory.setDefaultChallengeHandler(createChallengehandler());
 
                 //String location = "ws://10.24.117.141:6666/jms"; //CHANGED
-                String location = "ws://10.24.117.141:6666/jms"; //location of Kaazing instance
+                String location = "ws://ec2-52-215-7-248.eu-west-1.compute.amazonaws.com:6666/jms"; //location of Kaazing instance
                 connectionFactory.setGatewayLocation(URI.create(location));
 
                 connection = connectionFactory.createConnection();
@@ -79,11 +80,12 @@ public class MQService extends Service {
 
                 Log.i("connected", "connected");
                 Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-                Destination destination = session.createQueue("/queue/outgoing");
+                Destination destination = session.createQueue("/queue/REMOTEQ");
+
 
                 MessageProducer messageProducer = session.createProducer(destination);
 
-                Message m = session.createMessage();
+                TextMessage m = (TextMessage)session.createTextMessage();
 
                 SharedPreferences sharedPreferences = getSharedPreferences("customerDetail.txt",MODE_PRIVATE);
                 String customerid =  sharedPreferences.getString("customerId","error");
@@ -92,59 +94,63 @@ public class MQService extends Service {
                 m.setStringProperty("customerid", customerid);
                 m.setStringProperty("latitude", latitude);
                 m.setStringProperty("longitude", longitude);
+                m.setText("body text");
+
 
                 messageProducer.send(destination, m);
 
 
-                destination = session.createQueue("/queue/incoming");
+                destination = session.createQueue("/queue/REMOTEQ2");
                 MessageConsumer messageConsumer = session.createConsumer(destination);
-                messageConsumer.setMessageListener(new MessageListener() {
+                session.setMessageListener(new MessageListener() {
                     @Override
                     public void onMessage(Message message) {
-                        final TextMessage m_in = (TextMessage)message;
-
-                        Handler handler = new Handler(Looper.getMainLooper());
-
-                        handler.post(new Runnable(){
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(), "Notification Received", Toast.LENGTH_SHORT).show();
-                                NotificationCompat.Builder notificiation_builder = new NotificationCompat.Builder(MQService.this);
-                                notificiation_builder.setContentTitle("Greetings from Harrods");
-                                notificiation_builder.setAutoCancel(true);
-                                notificiation_builder.setContentIntent(PendingIntent.getActivity(getApplicationContext(),0,new Intent(),0));
-                                notificiation_builder.setSmallIcon(R.drawable.ic_stat_name);
-                                notificiation_builder.setLargeIcon(BitmapFactory.decodeResource(getResources(),R.drawable.harrods_logo));
-                                notificiation_builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-
-                                try {
-                                    notificiation_builder.setContentText(m_in.getText());
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                Notification n = notificiation_builder.build();
-                                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                                nm.notify(123,n);
-                            }
-                        });
-
-                        try {
-                            Log.i("123123123",m_in.getPropertyNames().toString());
-                        } catch (JMSException e) {
-                            e.printStackTrace();
-                        }
+                        onMessageImpl(message);
                     }
                 });
+                //Message m_in = messageConsumer.receive();
 
+                //onMessage(m_in);
 
 
             } catch (Exception e) {
+                Log.i("FOOOOOOO","FOOOOOOO");
                 e.printStackTrace();
             }
         }
     }
 
-    private ChallengeHandler createChallengehandler() {
+    public void onMessageImpl(Message message) {
+        final TextMessage m_in = (TextMessage)message;
+
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), "Notification Received", Toast.LENGTH_SHORT).show();
+                NotificationCompat.Builder notificiation_builder = new NotificationCompat.Builder(MQService.this);
+                notificiation_builder.setContentTitle("Greetings from Harrods");
+                notificiation_builder.setAutoCancel(true);
+                notificiation_builder.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, new Intent(), 0));
+                notificiation_builder.setSmallIcon(R.drawable.ic_stat_name);
+                notificiation_builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.harrods_logo));
+                notificiation_builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+
+                try {
+                    notificiation_builder.setContentText(m_in.getText());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Notification n = notificiation_builder.build();
+                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                nm.notify(123, n);
+            };
+        });
+    }
+
+
+            private ChallengeHandler createChallengehandler() {
         final LoginHandler loginHandler = new LoginHandler() {
             private String username;
             private char[] password;
